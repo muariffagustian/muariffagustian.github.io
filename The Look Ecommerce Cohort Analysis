@@ -1,0 +1,55 @@
+-- Monthly retention cohorts and (%) of user coming back for the 6 following months starting from April 2022.
+
+WITH
+cohort_items AS (
+  SELECT
+    user_id
+    ,MIN(DATE(DATE_TRUNC(created_at,MONTH))) AS cohort_month
+  FROM `bigquery-public-data.thelook_ecommerce.order_items` 
+  GROUP BY 1
+)
+
+,user_activity AS (
+  SELECT
+    act.user_id AS user_id
+    ,(DATE_DIFF(
+      DATE(DATE_TRUNC(created_at,MONTH)),
+      cohort.cohort_month, MONTH)) AS month_number
+  FROM `bigquery-public-data.thelook_ecommerce.order_items` act
+  LEFT JOIN cohort_items cohort 
+    ON act.user_id = cohort.user_id
+  WHERE 
+    DATE_TRUNC(cohort.cohort_month, MONTH) > "2022-03-01"
+  GROUP BY 1, 2
+)
+
+,cohort_size AS (
+    SELECT 
+      cohort_month
+      ,COUNT(DISTINCT user_id) num_users
+    FROM cohort_items
+    GROUP BY 1
+    ORDER BY 1
+)
+
+,retention_table AS (
+  SELECT
+    C.cohort_month,
+    A.month_number,
+    COUNT(DISTINCT A.user_id) num_users
+  FROM user_activity A
+  LEFT JOIN cohort_items C ON A.user_id = C.user_id
+  GROUP BY 1, 2
+)
+
+-- final to-call
+SELECT
+  B.cohort_month
+  ,S.num_users AS cohort_size
+  ,B.month_number month_number
+  ,B.num_users AS total_users
+  ,CAST(B.num_users AS decimal)/ S.num_users AS percentage
+FROM retention_table B
+LEFT JOIN cohort_size S ON B.cohort_month = S.cohort_month
+WHERE B.cohort_month IS NOT NULL
+ORDER BY 1, 3 
