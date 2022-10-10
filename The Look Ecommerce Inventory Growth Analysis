@@ -1,0 +1,53 @@
+-- Find monthly growth of inventory in percentage breakdown by product categories, ordered by time
+-- descending. Time frame (Jan 2019 - Aprl 2022).
+
+WITH
+  -- table product
+  products as (
+    SELECT
+      id as product_id
+      ,category
+      ,retail_price
+    FROM `bigquery-public-data.thelook_ecommerce.products`
+  )
+
+  -- table inventory
+  ,inventory as (
+    SELECT
+      product_id
+      ,id as inventory_id
+      ,DATE(created_at) created_date
+    FROM `bigquery-public-data.thelook_ecommerce.inventory_items`
+  )  
+  ,counting as(
+  SELECT
+    DATE_TRUNC(t2.created_date, MONTH) as date
+    ,t1.category as product_category
+    ,COUNT(t2.inventory_id)total_inventory
+  FROM products t1
+  INNER JOIN inventory t2
+    ON t1.product_id = t2.product_id
+  WHERE 1=1
+    AND DATE_TRUNC(t2.created_date, MONTH) BETWEEN "2019-01-01" AND "2022-04-30"
+  GROUP BY 2,1
+  )
+
+  ,cummulatives as (
+  SELECT*
+    ,SUM(counting.total_inventory) OVER(PARTITION BY counting.product_category ORDER BY counting.date) cummulative_inventory
+  FROM counting
+  )
+
+SELECT
+  date
+  ,product_category
+  ,cummulative_inventory
+  ,last_cummulative
+  -- ,CAST(((cummulative_inventory - last_cummulative)/last_cummulative) AS decimal) as growth
+  ,CAST(((cummulative_inventory - last_cummulative)/last_cummulative)*100 AS decimal) as growth_percent
+FROM(
+  SELECT*
+    ,LAG(cummulatives.cummulative_inventory) OVER(PARTITION BY cummulatives.product_category ORDER BY cummulatives.product_category DESC) last_cummulative
+  FROM cummulatives
+  ORDER BY cummulatives.product_category, cummulatives.date DESC
+)
