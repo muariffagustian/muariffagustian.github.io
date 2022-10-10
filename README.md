@@ -12,7 +12,7 @@ Output columns:
 - Growth (%)
 
 ## [Project 2: The Look Ecommerce - Cohort Analysis](https://github.com/muariffagustian/muariffagustian.github.io/blob/main/The%20Look%20Ecommerce%20Cohort%20Analysis)
-This is the second project of module SQL from RevoU FDSA programme. Similar to the first one, the project was conducted using Google BigQuery using the same dataset **The Look Ecommerce**. Here I created a code to query the cohort matrix for users registered and firstly purchased from *March 2022 to date (October 2022)*. The purpose is to see how is the retention rate of customers re-order on from the ecommerce.
+This is the second project of module SQL from RevoU FDSA programme. Similar to the first one, the project was conducted using Google BigQuery using the same dataset **The Look Ecommerce**. Here I created a code to query the cohort matrix for users registered and firstly purchased from *March 2022 to date (October 2022)*. The purpose is to see how is the retention rate of customers' re-order from the ecommerce.
 
 Output columns:
 - Cohort months
